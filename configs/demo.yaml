@@ -1,0 +1,29 @@
+
+# Where to read from (local files, rtsp/http, or integers for webcams)
+inputs:
+  - path: data/samples/cam1.mp4
+    camera_id: cam1
+  - path: data/samples/cam2.mp4
+    camera_id: cam2
+
+# Where to write overlay videos/tracks
+output:
+  video_dir: outputs/videos
+  tracks_path: outputs/tracks.jsonl
+  show: false         # set true to visualize in a window
+
+# Modules to use (swap with your own implementations later)
+modules:
+  detector: dummy       # choices: dummy | yolov8 (stub)
+  tracker: centroid     # choices: centroid | byte (stub)
+  reid: cosine          # choices: cosine (simple) | deep (stub)
+
+# Runtime
+runtime:
+  max_frames: 300       # process at most N frames per camera (set null for full)
+  skip_frames: 1        # process every Nth frame for speed
+  draw:
+    show_box: true
+    show_id: true
+    show_cam: true
+    show_tracklet: true

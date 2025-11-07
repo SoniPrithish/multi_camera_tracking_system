@@ -1,0 +1,14 @@
+
+# Core
+opencv-python
+numpy
+pyyaml
+scikit-learn
+rich
+
+# If you plan to use deep models, uncomment as needed:
+# torch
+# torchvision
+# ultralytics
+# onnxruntime
+# norfair
