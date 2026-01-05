@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Camera Tracking Dashboard</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <h1 class="logo">
+                    <span class="logo-icon">◉</span>
+                    MultiCam Tracker
+                </h1>
+                <span class="version">v1.0</span>
+            </div>
+            <div class="header-right">
+                <div class="connection-status" id="connection-status">
+                    <span class="status-dot"></span>
+                    <span class="status-text">Connecting...</span>
+                </div>
+                <div class="uptime" id="uptime">--:--:--</div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Left Panel: Camera Feeds -->
+            <section class="camera-panel">
+                <div class="panel-header">
+                    <h2>Camera Feeds</h2>
+                    <span class="camera-count" id="camera-count">0 cameras</span>
+                </div>
+                <div class="camera-grid" id="camera-grid">
+                    <!-- Camera cards will be injected here -->
+                    <div class="camera-placeholder">
+                        <div class="placeholder-icon">📷</div>
+                        <p>No camera feeds available</p>
+                        <p class="hint">Configure streams in config.yaml</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Panel: Stats & Events -->
+            <aside class="stats-panel">
+                <!-- Quick Stats -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="total-people">0</div>
+                        <div class="stat-label">People Tracked</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="current-count">0</div>
+                        <div class="stat-label">Currently Visible</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="zone-entries">0</div>
+                        <div class="stat-label">Zone Entries</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="line-crossings">0</div>
+                        <div class="stat-label">Line Crossings</div>
+                    </div>
+                </div>
+
+                <!-- Zone Stats -->
+                <div class="panel-section">
+                    <h3>Zone Analytics</h3>
+                    <div class="zone-stats" id="zone-stats">
+                        <p class="empty-state">No zones configured</p>
+                    </div>
+                </div>
+
+                <!-- Event Timeline -->
+                <div class="panel-section">
+                    <h3>Recent Events</h3>
+                    <div class="event-timeline" id="event-timeline">
+                        <p class="empty-state">No events yet</p>
+                    </div>
+                </div>
+            </aside>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-left">
+                <span class="fps" id="fps">-- FPS</span>
+                <span class="divider">|</span>
+                <span class="events-count" id="events-count">0 events</span>
+            </div>
+            <div class="footer-right">
+                <a href="/api/health" target="_blank">API Health</a>
+                <span class="divider">|</span>
+                <a href="/docs" target="_blank">API Docs</a>
+            </div>
+        </footer>
+    </div>
+
+    <script src="/static/js/dashboard.js"></script>
+</body>
+</html>
+
