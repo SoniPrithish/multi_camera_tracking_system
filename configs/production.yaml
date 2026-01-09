@@ -1,0 +1,137 @@
+# Multi-Camera Tracking Production Configuration
+# Uses real deep learning models for detection and ReID.
+
+# Input video streams
+inputs:
+  - path: rtsp://192.168.1.101/stream
+    camera_id: entrance
+    queue_size: 30
+    reconnect_delay: 2.0
+    max_reconnects: 10
+  - path: rtsp://192.168.1.102/stream
+    camera_id: hallway
+    queue_size: 30
+    reconnect_delay: 2.0
+    max_reconnects: 10
+  - path: rtsp://192.168.1.103/stream
+    camera_id: exit
+    queue_size: 30
+    reconnect_delay: 2.0
+    max_reconnects: 10
+
+# Output settings
+output:
+  video_dir: outputs/videos
+  tracks_path: outputs/tracks.jsonl
+  manifest_path: outputs/manifest.json
+  stats_path: outputs/stats.json
+  show: false
+
+# Module configuration
+modules:
+  detector:
+    name: yolov8
+    model: yolov8s.pt  # Use yolov8n.pt for faster but less accurate
+    conf: 0.3
+    iou: 0.45
+    device: auto  # Will use GPU if available
+    img_size: 640
+  
+  tracker:
+    name: bytetrack
+    track_high_thresh: 0.5
+    track_low_thresh: 0.1
+    new_track_thresh: 0.6
+    match_thresh: 0.8
+    track_buffer: 30
+    min_hits: 3
+  
+  reid:
+    name: deep
+    model: osnet_x0_25
+    ema_alpha: 0.9
+    gallery_size: 100
+    sim_thresh: 0.6
+
+# Camera topology
+camera_graph:
+  cameras:
+    - id: entrance
+      name: Main Entrance
+      entry_zones: [entrance_zone]
+      exit_zones: []
+    - id: hallway
+      name: Main Hallway
+      entry_zones: [hallway_entry]
+      exit_zones: [hallway_exit]
+    - id: exit
+      name: Exit Gate
+      entry_zones: [exit_entry]
+      exit_zones: [exit_zone]
+  transitions:
+    - from: entrance
+      to: hallway
+      min_time: 5
+      max_time: 45
+    - from: hallway
+      to: exit
+      min_time: 10
+      max_time: 60
+
+# Analytics configuration
+analytics:
+  dwell_update_interval: 10.0
+  zones:
+    - id: entrance_zone
+      camera_id: entrance
+      name: Entrance Area
+      polygon: [[0, 400], [300, 400], [300, 720], [0, 720]]
+      type: entry
+      track_dwell: true
+      dwell_threshold: 5.0
+    - id: hallway_entry
+      camera_id: hallway
+      name: Hallway Entry
+      polygon: [[0, 0], [200, 0], [200, 200], [0, 200]]
+      type: entry
+    - id: hallway_exit
+      camera_id: hallway
+      name: Hallway Exit
+      polygon: [[1080, 520], [1280, 520], [1280, 720], [1080, 720]]
+      type: exit
+    - id: exit_entry
+      camera_id: exit
+      name: Exit Entry
+      polygon: [[0, 0], [200, 0], [200, 300], [0, 300]]
+      type: entry
+    - id: exit_zone
+      camera_id: exit
+      name: Exit Gate
+      polygon: [[1000, 400], [1280, 400], [1280, 720], [1000, 720]]
+      type: exit
+  lines:
+    - id: entrance_counter
+      camera_id: entrance
+      name: Entrance Counter
+      start: [0, 360]
+      end: [640, 360]
+      positive_direction: in
+    - id: exit_counter
+      camera_id: exit
+      name: Exit Counter
+      start: [640, 360]
+      end: [1280, 360]
+      positive_direction: out
+
+# Runtime settings
+runtime:
+  max_frames: null  # Run indefinitely
+  skip_frames: 1
+  min_fps: 15
+  max_latency_ms: 150
+  draw:
+    show_box: true
+    show_id: true
+    show_cam: true
+    show_tracklet: false  # Disable for performance
+

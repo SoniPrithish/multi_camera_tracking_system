@@ -1,27 +1,97 @@
+# Multi-Camera Tracking Demo Configuration
+# This config uses the dummy detector for testing without ML dependencies.
+# For production, change detector to 'yolov8' and reid to 'deep'.
 
-# Where to read from (local files, rtsp/http, or integers for webcams)
+# Input video streams
+# Supports: file paths, RTSP URLs, HTTP URLs, webcam indices
 inputs:
   - path: data/samples/cam1.mp4
     camera_id: cam1
+    queue_size: 30
+    reconnect_delay: 2.0
   - path: data/samples/cam2.mp4
     camera_id: cam2
+    queue_size: 30
+    reconnect_delay: 2.0
 
-# Where to write overlay videos/tracks
+# Output settings
 output:
   video_dir: outputs/videos
   tracks_path: outputs/tracks.jsonl
-  show: false         # set true to visualize in a window
+  manifest_path: outputs/manifest.json
+  stats_path: outputs/stats.json
+  show: false  # Set to true for live visualization window
 
-# Modules to use (swap with your own implementations later)
+# Module configuration
 modules:
-  detector: dummy       # choices: dummy | yolov8 (stub)
-  tracker: centroid     # choices: centroid | byte (stub)
-  reid: cosine          # choices: cosine (simple) | deep (stub)
+  # Detector options: dummy, yolov8, onnx
+  detector:
+    name: dummy  # Change to 'yolov8' for real detection
+    # model: yolov8n.pt
+    # conf: 0.25
+    # device: auto  # auto, cpu, cuda
+  
+  # Tracker options: centroid, byte, bytetrack
+  tracker:
+    name: centroid  # Change to 'bytetrack' for production
+    # track_high_thresh: 0.5
+    # track_low_thresh: 0.1
+    # track_buffer: 30
+  
+  # ReID options: cosine, deep, osnet
+  reid:
+    name: cosine  # Change to 'deep' for OSNet
+    sim_thresh: 0.7
+    # model: osnet_x0_25
+    # ema_alpha: 0.9
 
-# Runtime
+# Camera topology (optional)
+# Define expected transfer times between cameras
+camera_graph:
+  cameras:
+    - id: cam1
+      name: Camera 1
+    - id: cam2
+      name: Camera 2
+  transitions:
+    - from: cam1
+      to: cam2
+      min_time: 2
+      max_time: 30
+      bidirectional: true
+
+# Analytics configuration (optional)
+# Define zones and counting lines
+analytics:
+  zones:
+    - id: zone1
+      camera_id: cam1
+      name: Entry Zone
+      polygon: [[0, 300], [200, 300], [200, 480], [0, 480]]
+      type: entry
+      track_dwell: true
+      dwell_threshold: 3.0
+    - id: zone2
+      camera_id: cam1
+      name: Exit Zone
+      polygon: [[440, 300], [640, 300], [640, 480], [440, 480]]
+      type: exit
+  lines:
+    - id: counter1
+      camera_id: cam1
+      name: Main Counter
+      start: [0, 240]
+      end: [640, 240]
+      positive_direction: in
+
+# Runtime settings
 runtime:
-  max_frames: 300       # process at most N frames per camera (set null for full)
-  skip_frames: 1        # process every Nth frame for speed
+  max_frames: 300  # Set to null for unlimited
+  skip_frames: 1   # Process every Nth frame (1 = all frames)
+  min_fps: 10      # Minimum acceptable FPS before warnings
+  max_latency_ms: 200  # Maximum latency before adaptive scaling
+  
+  # Visualization settings
   draw:
     show_box: true
     show_id: true
