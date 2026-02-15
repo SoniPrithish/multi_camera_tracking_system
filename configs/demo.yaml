@@ -1,29 +1,88 @@
-
-# Where to read from (local files, rtsp/http, or integers for webcams)
+# ── Inputs (treat MP4 files as simulated live cameras) ──────────────────────
 inputs:
   - path: data/samples/cam1.mp4
     camera_id: cam1
   - path: data/samples/cam2.mp4
     camera_id: cam2
+  - path: data/samples/cam3.mp4
+    camera_id: cam3
+  - path: data/samples/cam4.mp4
+    camera_id: cam4
+  - path: data/samples/cam5.mp4
+    camera_id: cam5
+  - path: data/samples/cam6.mp4
+    camera_id: cam6
 
-# Where to write overlay videos/tracks
+# ── Output ──────────────────────────────────────────────────────────────────
 output:
   video_dir: outputs/videos
   tracks_path: outputs/tracks.jsonl
-  show: false         # set true to visualize in a window
+  show: false
 
-# Modules to use (swap with your own implementations later)
+# ── Modules ─────────────────────────────────────────────────────────────────
 modules:
-  detector: dummy       # choices: dummy | yolov8 (stub)
-  tracker: centroid     # choices: centroid | byte (stub)
-  reid: cosine          # choices: cosine (simple) | deep (stub)
+  detector: yolov8            # dummy | yolov8
+  detector_model: yolov8n.pt  # nano for speed on CPU
+  detector_conf: 0.35
+  detector_iou: 0.45
+  detector_device: "0"        # "cpu" or "0" for GPU
+  detector_img_size: 640
 
-# Runtime
+  tracker: byte               # centroid | byte
+  tracker_max_age: 30
+  tracker_min_hits: 3
+  tracker_iou_thresh: 0.2
+
+  reid: deep                  # cosine | deep
+  reid_model: osnet_x0_25
+  reid_device: "0"
+  reid_sim_thresh: 0.45
+  reid_ema_alpha: 0.7
+  reid_gallery_ttl: 120
+  reid_max_gallery: 500
+
+# ── Ingest ──────────────────────────────────────────────────────────────────
+ingest:
+  queue_size: 2               # bounded queue per camera (drop stale frames)
+  reconnect_delay: 3          # seconds before reconnect attempt
+  max_reconnect: 10           # max reconnect attempts before giving up
+  target_fps: 15              # read at this rate (skip source frames to match)
+
+# ── Runtime ─────────────────────────────────────────────────────────────────
 runtime:
-  max_frames: 300       # process at most N frames per camera (set null for full)
-  skip_frames: 1        # process every Nth frame for speed
+  max_frames: null             # null = process until end
+  skip_frames: 2              # process every Nth frame for speed
+  resize_width: 960           # downscale for processing (null = original)
   draw:
     show_box: true
     show_id: true
     show_cam: true
     show_tracklet: true
+
+# ── Cross-Camera Association (Stage 5) ───────────────────────────────────────
+association:
+  assoc_sim_thresh: 0.55       # Strict cosine similarity (high precision)
+  assoc_ema_alpha: 0.7         # EMA smoothing for gallery embeddings
+  assoc_min_transit_sec: 0     # Allow simultaneous (overlapping cameras cam1-4)
+  assoc_max_transit_sec: 120   # Max seconds for inactive entry matching
+  assoc_gallery_ttl: 90        # TTL before inactive entries are pruned
+  assoc_max_gallery_size: 500  # Gallery cap (prevents unbounded memory)
+  assoc_confirm_hits: 2        # Hits before entry becomes a match candidate
+
+# ── Events ──────────────────────────────────────────────────────────────────
+events:
+  entry_exit:
+    enabled: true
+    zones: []                  # define per-camera polygons; [] = full frame edge
+  dwell:
+    enabled: true
+    threshold_sec: 10
+  line_crossing:
+    enabled: true
+    lines: []                  # define per-camera line segments
+
+# ── Server ──────────────────────────────────────────────────────────────────
+server:
+  host: "0.0.0.0"
+  port: 8000
+  ws_jpeg_quality: 60
